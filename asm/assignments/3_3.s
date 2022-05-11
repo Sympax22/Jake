@@ -4,7 +4,7 @@
 #   a0
 
 # Task:
-#   a0 is the base address of a 4-byte signed integer (tip: we work with 64-bit wide registers).
+#   a0 is the base address of a 4-byte (=32-bit) signed integer (tip: we work with 64-bit wide registers).
 #   a1 indicates whether this integer has been stored in little-endian (a1 = 0) or big-endian (a1 = 1) mode.
 #   Your task is to retrieve the integer from memory and to return it.
 
@@ -21,30 +21,29 @@
 .type	assignment_3_3, @function
 assignment_3_3:
 
-    # Assignment code.
-    bne x0,a1,assignment_3_3_big_endian
-    # Little endian.
-    lw a0,(a0)
-    jal x0,assignment_3_3_finally
+    # Assignment code. 
 
-assignment_3_3_big_endian:
-    # Loading zero-extends (LBU) or sign-extends (LB) to 32 bits.
-    lb  t0,0(a0) # MSB, load as signed for sign extension.
-    lbu t1,1(a0)
-    lbu t2,2(a0)
-    lbu t3,3(a0) # LSB.
+    lw   a2, 0(a0)              # load @a0 into $a2
+    beq  a1, zero, done         # if a1 == 0, we have little endian, done
+    add  a2, zero, zero         # we have big endian, initialize a2 = 0
+    addi a7, zero, 4            # initialize a7 = 4
+    addi a4, zero, 8            # initialize a4 = 8
+    addi a1, zero, 12           # initialize a1 = 12
+    addi a1, a1, 12             # a1 += 12, a1 = 24
 
-    slli t0,t0,24
-    slli t1,t1,16
-    slli t2,t2,8
+    loop:
+        beq  a7, zero, done     # for i in range(4)
+        lbu  a3, 0(a0)          # load the first byte of reg @a0 into a3
+        sll  a3, a3, a1         # shift by a1
+        add  a2, a2, a3         # a2 += a3
+        addi a7, a7, -1         # i--
+        addi a0, a0, 1          # next byte
+        sub  a1, a1, a4         # a1 -= 4
+        beq  zero, zero, loop   # goto loop
 
-    add a0,x0,x0
-    or a0, a0, t0
-    or a0, a0, t1
-    or a0, a0, t2
-    or a0, a0, t3
+    done:
+        add a0, a2, zero        # store value in a0
 
-assignment_3_3_finally:
     # -- End of assignment code.
 
     jr ra # Return to the testing framework. Don't modify.

@@ -17,10 +17,12 @@
 .type	assignment_3_0, @function
 assignment_3_0:
 
-    # Assignment code.
-    lw t0, 0(a0)
-    addi t0, t0, 1
-    sw t0, 0(a0)
+    # Assignment code. almost done
+
+    lw   a1, (a0)           # load the value @a0 in $a1
+    addi a1, a1, 1          # increment a1
+    sw   a1, (a0)           # store the value a1+1 @a0
+
     # -- End of assignment code.
 
     jr ra # Return to the testing framework. Don't modify.

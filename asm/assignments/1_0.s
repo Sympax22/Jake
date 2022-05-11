@@ -19,7 +19,9 @@
 assignment_1_0:
 
     # Assignment code.
-    add a0, a1, a0
+
+    add a0, a1, a0          # a0 += a1         
+    
     # -- End of assignment code.
     jr ra # Return to the testing framework. Don't modify.
 

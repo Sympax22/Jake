@@ -6,7 +6,7 @@
 # Task:
 #   a0 is the entry point of a function provided to you.
 #   Your task is to transfer control to this function.
-#   Don't forget to provide the return address in x1 (also known as ra) & to save it beforehand.
+#   Don't forget to provide the return address in x1 & to save it beforehand.
 
 # Authorized:
 # lb, lh, lw, ld, lbu, lhu, lwu, ldu
@@ -22,11 +22,13 @@
 assignment_4_0:
 
     # Assignment code.
-    addi sp, sp, -8
-    sd   ra, 0(sp)
-    jalr ra, a0
-    ld   ra, 0(sp)
-    addi sp, sp, 8
+
+    addi  sp, sp, -4            # prepare stack
+    sw    ra, 0(sp)             # store return address
+    jalr  ra, a0                    # call function, addr @a0+0
+    lw    ra, 0(sp)             # load return address
+    addi  sp, sp, 4             # restore stack
+
     # -- End of assignment code.
 
     jr ra # Return to the testing framework. Don't modify.

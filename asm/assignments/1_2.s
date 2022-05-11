@@ -9,7 +9,7 @@
 
 # Authorized:
 # sll, slli, srl, srli, sra, srai
-# add, addi, sub, lui
+# add, addi, sub, lui, auipc
 # xor, xori, or, ori, and, andi
 # slt, slti, sltu, sltiu
 
@@ -19,8 +19,10 @@
 .type	assignment_1_2, @function
 assignment_1_2:
 
-    # Assignment code.
-    srli a0, a0, 31
+    # Assignment code
+
+    srli a0, a0, 31         # a0 = a0 >> 0x7FFFFFFF
+
     # -- End of assignment code.
 
     jr ra # Return to the testing framework. Don't modify.

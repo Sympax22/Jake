@@ -21,18 +21,20 @@
 .type	assignment_3_2, @function
 assignment_3_2:
 
-    # Assignment code.
-    addi t0, a0, 0
+    # Assignment code. just a couple
 
-assignment_3_2_loop:
-    lw t1, 0(t0)
-    beq t1, x0, assignment_3_2_end
-    addi t0, t0, 4
-    jal x0, assignment_3_2_loop
+    add  a1, zero, zero             # tot_nonz = 0
 
-assignment_3_2_end:
-    sub t0, t0, a0
-    srli a0, t0, 2
+    loop:                           # while(true):
+        lw a2, 0(a0)                # arr[i]
+        beq a2, zero, is_zero       # if it's not 0 go on, else return
+        addi a1, a1, 1              # it's not zero, so increment tot and the adress
+        addi a0, a0, 4  
+        beq zero, zero, loop        # jump back to the loop
+
+    is_zero:                        # other case: found 0 element, exit all loops and return in $a0
+        add a0, zero, a1
+
 
     # -- End of assignment code.
 

@@ -19,11 +19,13 @@
 assignment_3_1:
 
     # Assignment code.
-    slli a1, a1, 2
-    add a1, a0, a1
-    lw t0, 0(a1)
-    addi t0, t0, 1
-    sw t0, 0(a1)
+
+    slli a1,  a1, 2         # a1 *= 4
+    add  a2,  a1, a0        # address is @ a0 + 4*a1
+    lw   a3, 0(a2)          # load the value @ a0 + 4*a1 into $a3
+    addi a3,  a3, 1         # increment
+    sw   a3, 0(a2)          # store a3+1 @ a0 + 4*a1
+
     # -- End of assignment code.
 
     jr ra # Return to the testing framework. Don't modify.

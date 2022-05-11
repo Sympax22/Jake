@@ -1,30 +1,29 @@
+# Input register:
+#   a0
 # Output register:
 #   a0
 
 # Task:
 #   a0 is a 32-bit integer.
-#   Set a0's value to 0xbadcab1e.
+#   Invert the a0 value bitwise (each zero bit of a0 must be set to 1 and vice-versa).
 
 # Authorized:
 # sll, slli, srl, srli, sra, srai
-# add, addi, sub, lui
+# add, addi, sub, lui, auipc
 # xor, xori, or, ori, and, andi
-# slt, slti, sltu, sltiu
-
-# Hints:
-# - The auipc instruction sets the 20 top bits of the target register.
-# - The addi instruction sets the 12 bottom bits of the target register. But problem: it sign-extends it! Can you work around it?
+# slt slti, sltu, sltiu
 
 .text
 .align	1
-.globl	assignment_1_3
-.type	assignment_1_3, @function
-assignment_1_3:
+.globl	assignment_1_4
+.type	assignment_1_4, @function
+assignment_1_4:
 
-    # Assignment code.
-   lui	a0,0x5d6e5
-   addi	a0,a0,1423
-   c.slli	a0,0x1
+    # Assignment code. 
+
+    addi a1, zero, -1           # generate 0xFFFFFFFF
+    xor  a0, a0, a1             # XOR(r,   0xFFFFFFFF) = inv(r)
+
     # -- End of assignment code.
 
     jr ra # Return to the testing framework. Don't modify.

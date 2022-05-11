@@ -19,12 +19,16 @@
 assignment_2_0:
 
     # Assignment code.
-	addi t0, a1, 0
-	beq  a0, x0, assignment_2_0_branch_tgt
-    addi t0, a2, 0
 
-assignment_2_0_branch_tgt:
-    addi a0, t0, 0
+    
+    add a7, zero, a0            # a7 = a0
+    add a0, zero, a1            # a0 = a1
+    beq a7, zero, done          # if (a7 == 0): done
+    add a0, zero, a2            # a7 != 0, so a0 = a2
+
+    done:                       # end
+
+
     # -- End of assignment code.
 
     jr ra # Return to the testing framework. Don't modify.

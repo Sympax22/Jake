@@ -18,35 +18,34 @@
 .type	assignment_2_1, @function
 assignment_2_1:
 
-    # Assignment code.
+    # Assignment code. this sucks
 
-    # Return if a0 is zero. 
-    beq a0, x0, assignment_2_1_zero
+    
+    beq  a0, zero, is_zero          # if (n == 0), branch
+    addi a1, zero, 0                # all other cases, f1 stored in $a1
+    addi a2, zero, 1                # f2 stored in $a2
+    addi a3, zero, 0                # temp stored in a3
+    addi a7, zero, 0                # loop variable i stored in $a7
 
-    # # Offset the index in the sequence.
-    addi a0, a0, -1
+    loop:                           # for loop --- for i in range(n):
+        beq  a7,   a0, exit_loop
+        add  a3, zero, a2           # temp = f2     
+        add  a2,   a2, a1           # f2 = f2 + f1
+        add  a1, zero, a3           # f1 = temp
+        addi a7,   a7, 1            # i++
+        beq zero, zero, loop        # j loop
 
-    # Initialize the first two terms.
-    addi t0, x0, 0
-    addi t1, x0, 1
+    # --- End of loop ---    
 
-    # Constant equal to 1.
-    addi t3, x0, 1
-assignment_2_1_loop:
-    blt a0, t3, assignment_2_1_branch_tgt
+    exit_loop:                      # done counting, return f1
+        add   a0, zero, a1
+        beq zero, zero, done
 
-    # Iterate the addition, with one buffer element.
-    add t2, t1, t0
-    add t0, x0, t1
-    add t1, x0, t2
-    # Decrement a0.
-    addi a0, a0, -1
-    jal x0, assignment_2_1_loop
+    is_zero:                        # base case
+        add   a0, zero, zero
 
-assignment_2_1_zero:
-    addi t1, x0, 0
-assignment_2_1_branch_tgt:
-    addi a0, t1, 0
+    done:                           # end
+
     # -- End of assignment code.
 
     jr ra # Return to the testing framework. Don't modify.
