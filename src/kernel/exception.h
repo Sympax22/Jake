@@ -1,0 +1,20 @@
+#include "types.h"
+#include "util.h"
+#include "pt.h"
+
+/* See p. 39 of the ISA */
+#define SCAUSE_INTERRUPT_SHIFT 63
+#define SCAUSE_EXCEPTION_CODE_MASK ~(1UL << SCAUSE_INTERRUPT_SHIFT)
+
+#define SUPERVISOR_SOFTWARE_INTERRUPT 1
+#define MACHINE_SOFTWARE_INTERRUPT 3
+
+#define ILLEGAL_INSTRUCTION 2
+#define LOAD_ACCESS_FAULT 5
+#define STORE_AMO_ACCESS_FAULT 7
+#define ENV_CALL_FROM_SMODE 9
+#define INSTRUCTION_PAGE_FAULT 12
+#define LOAD_PAGE_FAULT 13
+#define STORE_AMO_PAGE_FAULT 15
+
+extern struct node *kvmas_head;
