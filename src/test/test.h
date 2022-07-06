@@ -1,3 +1,5 @@
+#ifndef TESTB_H
+#define TESTB_H
 #include "../kernel/util.h"
 
 struct test {
@@ -14,3 +16,5 @@ struct test_machine {
 void test_score_update(struct test_machine *tm, const struct test *ts, int t);
 void test_print_failure(const char *name, int total_score);
 void test_print_success(const char *name, int score, int total_score);
+
+#endif

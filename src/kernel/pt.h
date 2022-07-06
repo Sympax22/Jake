@@ -1,6 +1,18 @@
+#ifndef PT_H
+#define PT_H
+
 #include "types.h"
 #include "util.h"
 #include "buddy.h"
+
+// Required to allow the SUPERVISOR
+// to read/write user pages
+#define SSTATUS_SUM 0x40000ULL // (1UL<<18)
+
+#define SATP_MODE_BARE 0UL
+#define SATP_MODE_SV48 9UL
+#define SATP_MODE_SHIFT 60
+#define SATP_MODE_MASK 0xF
 
 #define PT_NUM_LEVELS 5 /* Including SATP */
 
@@ -13,10 +25,11 @@
 #define VIRT_MEM_KERNEL_BASE (0x1ffffUL << VIRT_MEM_KERNEL_SHIFT)
 
 #define VMA_READ 0x1UL
-#define VMA_WRITE 0x2UL
-#define VMA_EXEC 0x4UL
-#define VMA_POPULATE 0x8UL
-#define VMA_IDENTITY 0x10UL
+#define VMA_WRITE (0x1UL << 2)
+#define VMA_EXEC (0x1UL << 3)
+#define VMA_POPULATE (0x1UL << 4)
+#define VMA_IDENTITY (0x1UL << 5)
+#define VMA_USER (0x1UL << 6)
 
 #define PTE_VALID_SHIFT 0
 #define PTE_READ_SHIFT 1
@@ -46,10 +59,6 @@
 #define flags_get(flags, shift) pte_get(flags, shift)
 #define flags_set(flags, shift) pte_set(flags, shift)
 
-#define pte_get_perm(pte) ((pte) & (__PTE_PERM_MASK))
-#define pte_clear_perm(pte) ((pte) ^ pte_get_ppn(pte))
-#define pte_set_perm(pte, perm) (pte_clear_perm(pte) ^ (perm & __PTE_PERM_MASK))
-
 #define pte_get_ppn(pte) (((pte) >> __PTE_PPN_SHIFT) & __PTE_PPN_MASK)
 
 /* clang-format off */
@@ -65,11 +74,18 @@
 #define satp_get(satp, mask, shift) (((satp) >> (shift)) & (mask))
 #define satp2pte(satp)                                                         \
 	pte_set_ppn(0x1UL, satp_get(satp, SATP_PPN_MASK, SATP_PPN_SHIFT))
-#define pte_is_leaf(pte) pte_get(pte, PTE_READ_SHIFT)
+
+#define pte_is_leaf(pte) (pte_is_leaf_read(pte)|pte_is_leaf_exec(pte))
+#define pte_is_leaf_read(pte) pte_get(pte, PTE_READ_SHIFT)
+#define pte_is_leaf_exec(pte) pte_get(pte, PTE_EXEC_SHIFT)
+#define pte2kvirt(pte) (phys2kvirt(ppn2phys(pte_get_ppn(pte))))
+
 #define pte_is_valid(pte) pte_get(pte, PTE_VALID_SHIFT)
 
 #define ppn2phys(ppn) ((ppn) << PAGE_SHIFT)
+#ifndef phys2ppn
 #define phys2ppn(phys) ((phys) >> PAGE_SHIFT)
+#endif
 #define vpn2virt(vpn) ppn2phys(vpn)
 #define virt2vpn(virt) phys2ppn(virt)
 
@@ -77,8 +93,7 @@
  * The virtual memory area (VMA) structure, cornerstone of virtual memory, and
  * what is exported to other kernel subsystems (like buddy exported blocks)
  */
-struct vma 
-{
+struct vma {
 	uintptr_t vpn;
 	size_t pagen;
 	uintptr_t flags;
@@ -183,3 +198,20 @@ void *phys2kvirt(uintptr_t phys);
 void pt_jump_to_high(void);
 void pt_destroy_low_kvmas(void);
 int pt_init(void);
+
+uintptr_t pt_alloc_pt(void);
+int pt_init_kvmas(size_t n, struct vma **_kvmas);
+int pt_init_kvma(struct vma *out, struct vma **_kvmas);
+
+void set_vma_protection();
+void unset_vma_protection();
+
+ssize_t pt_get_pte(uintptr_t *satp, uintptr_t vpn, uintptr_t *ptes,
+		   uintptr_t **out);
+
+struct vma *pt_alloc_vma(struct node *vmas_head);
+int pt_init_vmas_head(struct node **vmas_head);
+
+void *get_kvirt(uintptr_t *satp, void *user_virtual);
+
+#endif

@@ -1,6 +1,7 @@
 #include "util.h"
+#include "exception.h"
 
-extern void put(const char c);
+void put(const char);
 
 /* Char to hex */
 void __ctox(const char in, char *left, char *right)
@@ -12,7 +13,7 @@ void __ctox(const char in, char *left, char *right)
 
 /* Chars to hex */
 /* NOTE: *out must be twice the size of *in */
-size_t __cstox(const char *in, size_t len, char *out)
+static size_t __cstox(const char *in, size_t len, char *out)
 {
 	size_t firstnonzero = 2 * (len - 1);
 
@@ -142,7 +143,9 @@ void printptr(const void *ptr, char end)
 void printdbg(const char *str, const void *ptr)
 {
 	printstr(str);
+	printstr(MAG);
 	printptr(ptr, '\n');
+	printstr(RESET);
 }
 
 int ctz(uintptr_t in)
@@ -153,13 +156,6 @@ int ctz(uintptr_t in)
 		out++;
 	}
 	return out;
-}
-
-uintptr_t sp_read(void)
-{
-	uintptr_t sp;
-	asm volatile("mv %0, sp" : "=r"(sp));
-	return sp;
 }
 
 /* Inspired by Stephan van Schaik's implementation */
@@ -203,4 +199,36 @@ void list_remove(struct node *node)
 int list_is_empty(struct node *head)
 {
 	return head->next == head;
+}
+/*
+	This is strmcp implementation is different from C ANSI where 
+	0 is returned if they are equal.
+*/
+int strcmp(char *str1, char *str2)
+{
+	while (*str1 != '\0' && *str2 != '\0') {
+		if (*str1 != *str2) return 0;
+
+		str1++;
+		str2++;
+	}
+
+	if (*str1 != *str2)
+		return 0;
+	else
+		return 1;
+}
+
+// Compares up to n characters. For non-0 ending strings
+int strncmp(char *str1, char *str2, unsigned int n)
+{
+	while (n > 0) {
+		if (*str1 != *str2) return 0;
+
+		str1++;
+		str2++;
+		n--;
+	}
+
+	return 1;
 }

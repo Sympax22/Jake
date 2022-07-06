@@ -3,12 +3,11 @@ SHELL = /bin/sh
 srcdir = ./src/kernel
 testdir = ./src/kernel
 
-# TODO: add -M to CFLAGS?
-# AS = riscv64-unknown-linux-as
+# FIXME: add -M to CFLAGS?
 CC = riscv64-unknown-linux-gnu-gcc
-LD = riscv64-unknown-linux-gnu-ld
-LDFLAGS = -pie # -M
-CFLAGS = -c -g3 -O3 # -fno-tree-switch-conversion
+LD = riscv64-unknown-linux-gnu-ld 
+LDFLAGS = -pie# -M
+CFLAGS = -c -O3 -Wno-int-conversion -Wall# -fno-tree-switch-conversion
 
 SRCDIR = $(srcdir)
 TESTDIR = $(testdir)
@@ -18,6 +17,11 @@ VPATH = $(SRCDIR)
 SRCS_C = $(wildcard $(SRCDIR)/*.c)
 SRCS_S = $(wildcard $(SRCDIR)/*.S)
 SRCS := $(SRCS_C) $(SRCS_S)
+
+SRCS_APP := $(wildcard $(SRCDIR)/app/*.c)
+APPS := $(SRCS_APP:.c=.app)
+API="api.app"
+APPS_NOAPI := $(filter-out $(API), $(APPS))
 
 ifneq ($(TESTDIR),$(SRCDIR))
 CFLAGS += -DTEST
@@ -54,25 +58,39 @@ CFLAGS += -falign-functions=4
 # -Wall: all warnings! Makes you a good programmer!
 # CFLAGS += -Wall
 
+# The following has no debug flags, useful for
+# producing small binaries (u-mode)
+CFLAGS_NODB = -c -nodefaultlibs -fPIC -nostartfiles 
+CFLAGS_NODB += $(CFLAGS)
+
 # -S: Do not start CPU at startup (you must type 'c' in the monitor)
 # -s: Shorthand for -gdb tcp::1234, i.e. open a gdbserver on TCP port 1234.
 # -nographic: Implies -serial stdio which is what we want (and no GUI!)
 # -monitor none: Allows us to Ctrl-C qemu itself (instead of forw. to guest)
-QEMUFLAGS := -bios none -s -m 32M -machine virt -nographic -monitor none
+QEMUFLAGS := -bios none -s -m 512M -machine virt -nographic -monitor none
 
 .PHONY : grade
 grade : test qemu
 
-# TODO: get rid of src/kernel here
-src/kernel/stack.o src/kernel/ns16550a.o : %.o: %.S
-	$(CC) $(CFLAGS) $^ -o $@
+#API is not an app but we still need to remove it from the implicit rule
+# 	: does nothing :`)
+$(SRCDIR)/app/api.app: $(SRCDIR)/app/api.o
+	: 
 
-jake : clean main.ld $(OBJS)
-	$(LD) $(LDFLAGS) -o $@ -T main.ld -L$(SRCDIR) -L$(TESTDIR) $(OBJS)
+$(SRCDIR)/app/%.o: $(SRCDIR)/app/%.c
+	$(CC) $(CFLAGS_NODB) $^ -o $@
 
-# All targets below require either test or jake, for example
-# 	make jake gdb
-# 	make test gdb
+# FIXME: The second argument is to be able to reuse our test framework without 
+# duplication in usermode, maybe we should write a specific rule for testing.c 
+# process to not embedded the test code in every app?
+$(SRCDIR)/app/%.app: $(SRCDIR)/app/%.o $(SRCDIR)/app/api.o $(SRCDIR)/util.o $(TESTDIR)/test.o
+	$(LD) $(LDFLAGS) $^ -o $@ -T $(SRCDIR)/app/hello.ld --entry=start
+
+$(SRCDIR)/%.o: $(SRCDIR)/%.S $(APPS_NOAPI)
+	$(CC) $(CFLAGS) $< -o $@
+
+jake : clean main.ld $(OBJS) $(APPS_NOAPI)
+	$(LD) -o $@ -T main.ld -L$(SRCDIR) -L$(TESTDIR) $(OBJS)
 
 .PHONY : test
 test :
@@ -103,6 +121,7 @@ tar :
 .PHONY : clean
 clean :
 	rm -f $(SRCDIR)/*.o ./src/test/*.o jake
+	rm -f $(SRCDIR)/app/*.o $(SRCDIR)/app/*.app
 
 # Taken from
 # http://cdn.kernel.org/pub/linux/kernel/people/will/docs/qemu/qemu-arm64-howto.htmlen

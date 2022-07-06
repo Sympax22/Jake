@@ -12,12 +12,18 @@
 .extern main # .extern is ignored by the assembler, but not by humans
 .extern scall
 .extern mcall
-
+.extern timer_setup
+.extern trap_handler_s
+.extern trap_handler
+.extern tf_generic
+.extern tf_temp
 # FIXME: there's also a TOP_STACK in buddy.c, make sure there's only one .globl?
-# .globl TOP_STACK
-.equ TOP_STACK, 0x2000 # 32 MB because Upper Imm. (0x2000 << 12)
-
+.equ TOP_STACK, 0x20000 # 512 MB  
+# 10 pages for stack, means the lowest is 0x1fff6 (? 0xa000 ?)
+# we assign 2 pages for mmachine, 0x1fff8
+   
 .section .text
+_entry:
 	# Initialize stack pointer
 	auipc sp, TOP_STACK
 	# Disable paging
@@ -28,23 +34,26 @@
 	sll t0, t0, 0xb
 	# Optionally setting MIE and SIE in mstatus
 	# xor t0, t0, 0xa
+	#li t0, 0xA # 0x8 + 0x2
 	csrw mstatus, t0
+	
+	# Set interrupt vector in S-mode to scall
+	la t0, trap_handler_s
+	csrw stvec, t0
+	# Set interrupt vector in M-mode to mcall (just in case)
+	la t0, trap_handler
+	csrw mtvec, t0
+		
+	li t0, 0xB9FF
+	csrw medeleg, t0
+	li t0, 0xFFFF
+	csrw mideleg, t0
+
+	li t1, 0x9fff7
+	slli t1, t1, 12
+	csrw mscratch, t1	
+
 	# Set return address for mret to main
 	la t0, main
 	csrw mepc, t0
-	# Set interrupt vector in S-mode to scall
-	la t0, scall
-	csrw stvec, t0
-	# Set interrupt vector in M-mode to mcall (just in case)
-	la t0, mcall
-	csrw mtvec, t0
-	# Mask all synchronous exceptions in M-mode, delegate to S-mode
-	li t0, 0xbbff
-	csrw medeleg, t0
-	# Delegate interrupts to S-mode as well
-	li t0, 0xaaa
-	csrw mideleg, t0
-	# Optionally setting mie
-	# csrw mie, t0
-	# NOTE: sets MPIE to 1 regardless
 	mret

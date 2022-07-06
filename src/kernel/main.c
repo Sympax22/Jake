@@ -1,24 +1,30 @@
 #include "util.h"
 #include "buddy.h"
 #include "pt.h"
+#include "process.h"
 #include "test.h"
+#include "exception.h"
 
+/* TODO 9: Written by us
+ * main
+ */
 void main()
 {
-	int ret;
-
+	printstr(YAK_LOGO);
 	buddy_init();
 
 #ifdef TEST
 	buddy_test();
 #endif
 
+	int ret;
 	ret = pt_init();
-	if (ret) printdbg("pt init failed: ", (void *)(uintptr_t)ret);
-	/*
-	 * Why do you think that we call this outside of pt_init and not
-	 * inside?
-	 */
+	if (ret != 0) 
+	{
+		printdbg("pt init failed: ", (void *)(uintptr_t)ret);
+		turn_off;
+	}
+
 	pt_jump_to_high();
 	pt_destroy_low_kvmas();
 
@@ -26,10 +32,24 @@ void main()
 	pt_test();
 #endif
 
-	printstr("done!\n");
+	proc_init_process_list();
 
-	/* FIXME: should shutdown */
-	for (;;) {
+	set_sscratch();
+
+	/* TODO 9:
+	**  When you are ready, enable the timer interrupt by uncommenting the following line
+	**/
+	ecall_timer_setup();
+
+	// FIXME: why doesnt it work if it's used
+	// directly?
+	void *ptr = &_testing;
+	printstr("Starting testing process...: \n");
+	ret       = proc_run_process(ptr, 0);
+
+	if (ret) 
+	{
+		printdbg("ERROR: Could not test process: \n",
+			 (void *)(uintptr_t)ret);
 	}
-	/* Trick to make it stop the infinite main-loop */
-};
+}
